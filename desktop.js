@@ -1,4 +1,4 @@
-// Red Portal Desktop - robust window manager
+// Red Portal Desktop - full implementation
 
 const DesktopApps = [
   { id: 'home', title: 'Home/About', icon: '🏠', appFn: renderHomeApp },
@@ -24,6 +24,7 @@ const GameList = [
 let DesktopWindows = [];
 let windowCounter = 0;
 let dragInfo = null;
+let isFullscreen = false;
 
 function createAppWindow({title, content, appId}) {
   const id = windowCounter++;
@@ -229,7 +230,6 @@ window.openAppWindow = function(appId) {
 }
 
 // Fullscreen logic
-let isFullscreen = false;
 function toggleFullscreen() {
   const wrapper = document.getElementById('desktop-wrapper');
   if (!isFullscreen) {
@@ -240,6 +240,7 @@ function toggleFullscreen() {
     isFullscreen = false;
   }
 }
+document.getElementById('fullscreen-btn').onclick = toggleFullscreen;
 
 // App renderers
 function renderHomeApp() {
@@ -382,8 +383,6 @@ document.addEventListener("DOMContentLoaded", () => {
       hideStartMenu();
     }
   });
-  // Fullscreen button
-  document.getElementById('fullscreen-btn').onclick = toggleFullscreen;
   // Adjust windows on resize (keep inside desktop)
   window.addEventListener('resize', () => {
     DesktopWindows.forEach(win => {
