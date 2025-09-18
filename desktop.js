@@ -1,10 +1,10 @@
-// Red Portal Desktop - DOM registry, NO micro reloads
+// Red Portal Desktop - Guaranteed NO micro reloads, persistent tab/app windows
 
 const DesktopApps = [
-  { id: 'home', title: 'Home/About', icon: '🏠', create: createHomeContent },
-  { id: 'games', title: 'Games', icon: '🎮', create: createGamesContent },
-  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', create: createFetcherContent },
-  { id: 'executor', title: 'HTML Executor', icon: '⚡', create: createExecutorContent },
+  { id: 'home', title: 'Home/About', icon: '🏠', makeNode: makeHomeNode },
+  { id: 'games', title: 'Games', icon: '🎮', makeNode: makeGamesNode },
+  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', makeNode: makeFetcherNode },
+  { id: 'executor', title: 'HTML Executor', icon: '⚡', makeNode: makeExecutorNode },
 ];
 
 const GameList = [
@@ -26,12 +26,12 @@ let windowCounter = 0;
 let dragInfo = null;
 let isFullscreen = false;
 
-function createWindow({title, appId, contentNode}) {
+function createWindow({title, appId, node}) {
   const id = windowCounter++;
   const win = {
     id, title, appId, minimized: false, maximized: false, active: true,
     x: 70 + Math.random()*160, y: 60 + Math.random()*80, width: 520, height: 340, z: 10 + id,
-    el: null // reference to DOM element
+    el: null, node
   };
 
   // Window DOM
@@ -61,10 +61,10 @@ function createWindow({title, appId, contentNode}) {
   header.querySelectorAll('.window-control-btn')[2].onclick = (e) => { closeWindow(win.id); e.stopPropagation(); };
   winDiv.appendChild(header);
 
-  // content
+  // content (persistent node)
   const contentDiv = document.createElement('div');
   contentDiv.className = 'window-content';
-  contentDiv.appendChild(contentNode);
+  contentDiv.appendChild(node);
   winDiv.appendChild(contentDiv);
 
   winDiv.onclick = (e) => { focusWindow(win.id); };
@@ -206,7 +206,6 @@ function showStartMenu() {
     </button>`
   ).join('');
   menu.style.display = "flex";
-  // Attach once-per-button event handlers for window registry
   Array.from(menu.querySelectorAll('.start-menu-app-btn')).forEach(btn => {
     btn.onclick = () => {
       openAppWindow(btn.getAttribute('data-appid'));
@@ -220,16 +219,23 @@ function hideStartMenu() {
 function openAppWindow(appId) {
   const app = DesktopApps.find(a => a.id === appId);
   if (!app) return;
+  // Check if window for this app already exists, just focus it
+  const win = DesktopWindows.find(w => w.appId === appId);
+  if (win) {
+    focusWindow(win.id);
+    return;
+  }
+  // Create persistent node for app
   createWindow({
     title: app.title,
     appId: app.id,
-    contentNode: app.create()
+    node: app.makeNode()
   });
 }
 
-// App window content factories: always return persistent DOM nodes
+// App window node factories: always return persistent DOM nodes
 
-function createHomeContent() {
+function makeHomeNode() {
   const div = document.createElement('div');
   div.innerHTML = `
     <h2>Welcome to Red Portal Desktop</h2>
@@ -250,7 +256,7 @@ function createHomeContent() {
   return div;
 }
 
-function createGamesContent() {
+function makeGamesNode() {
   const div = document.createElement('div');
   div.innerHTML = `<h2>Game Library</h2>
     <div class="game-btns"></div>
@@ -276,11 +282,11 @@ function openGameWindow(url, name) {
   createWindow({
     title: name,
     appId: 'games',
-    contentNode: iframe
+    node: iframe
   });
 }
 
-function createFetcherContent() {
+function makeFetcherNode() {
   const div = document.createElement('div');
   div.innerHTML = `<h2>Website Fetcher</h2>
     <form class="fletcher-box">
@@ -302,7 +308,7 @@ function createFetcherContent() {
   return div;
 }
 
-function createExecutorContent() {
+function makeExecutorNode() {
   const div = document.createElement('div');
   div.innerHTML = `<h2>HTML Executor</h2>
     <div class="executor-box">
