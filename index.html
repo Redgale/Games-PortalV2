@@ -8,21 +8,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="desktop">
-    <!-- Windows will be injected here -->
-  </div>
-  <div id="taskbar">
-    <div id="start-btn" tabindex="0"><span>☰</span></div>
-    <div id="taskbar-windows"></div>
-    <div id="desktop-controls">
+  <div id="desktop-wrapper">
+    <div id="desktop"></div>
+    <div id="taskbar">
+      <div id="start-btn" tabindex="0"><span>☰</span></div>
+      <div id="taskbar-windows"></div>
       <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
     </div>
+    <div id="start-menu" style="display:none;"></div>
   </div>
-  <div id="start-menu" style="display:none;"></div>
-  <script src="components.js"></script>
-  <script src="games.js"></script>
-  <script src="windows.js"></script>
-  <script src="apps.js"></script>
   <script src="desktop.js"></script>
 </body>
 </html>
