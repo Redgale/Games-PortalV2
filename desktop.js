@@ -1,10 +1,10 @@
-// Red Portal Desktop - micro reloads fixed with persistent DOM
+// Red Portal Desktop - DOM registry, NO micro reloads
 
 const DesktopApps = [
-  { id: 'home', title: 'Home/About', icon: '🏠', appFn: renderHomeApp },
-  { id: 'games', title: 'Games', icon: '🎮', appFn: renderGamesApp },
-  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', appFn: renderFetcherApp },
-  { id: 'executor', title: 'HTML Executor', icon: '⚡', appFn: renderExecutorApp },
+  { id: 'home', title: 'Home/About', icon: '🏠', create: createHomeContent },
+  { id: 'games', title: 'Games', icon: '🎮', create: createGamesContent },
+  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', create: createFetcherContent },
+  { id: 'executor', title: 'HTML Executor', icon: '⚡', create: createExecutorContent },
 ];
 
 const GameList = [
@@ -26,21 +26,15 @@ let windowCounter = 0;
 let dragInfo = null;
 let isFullscreen = false;
 
-function createAppWindow({title, content, appId}) {
+function createWindow({title, appId, contentNode}) {
   const id = windowCounter++;
   const win = {
     id, title, appId, minimized: false, maximized: false, active: true,
     x: 70 + Math.random()*160, y: 60 + Math.random()*80, width: 520, height: 340, z: 10 + id,
     el: null // reference to DOM element
   };
-  DesktopWindows.push(win);
-  addWindowToDOM(win, content);
-  updateTaskbar();
-  return win;
-}
 
-function addWindowToDOM(win, content) {
-  const desktop = document.getElementById('desktop');
+  // Window DOM
   const winDiv = document.createElement('div');
   winDiv.className = 'window';
   winDiv.style.left = win.x + 'px';
@@ -61,37 +55,27 @@ function addWindowToDOM(win, content) {
       <button class="window-control-btn" title="Close">✕</button>
     </div>
   `;
-  // Drag logic
   header.addEventListener('mousedown', (e) => startDrag(win.id, e));
-  // Control buttons
   header.querySelectorAll('.window-control-btn')[0].onclick = (e) => { minimizeWindow(win.id); e.stopPropagation(); };
   header.querySelectorAll('.window-control-btn')[1].onclick = (e) => { toggleMaximizeWindow(win.id); e.stopPropagation(); };
   header.querySelectorAll('.window-control-btn')[2].onclick = (e) => { closeWindow(win.id); e.stopPropagation(); };
-
   winDiv.appendChild(header);
 
   // content
   const contentDiv = document.createElement('div');
   contentDiv.className = 'window-content';
-  // Instead of innerHTML, use appendChild for persistent DOM
-  if (typeof content === "string") {
-    // If content is HTML string, convert to nodes
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    while (tempDiv.firstChild) contentDiv.appendChild(tempDiv.firstChild);
-  } else {
-    // If content is already a DOM node (iframe, textarea, etc), append directly
-    contentDiv.appendChild(content);
-  }
+  contentDiv.appendChild(contentNode);
   winDiv.appendChild(contentDiv);
 
-  // Click to focus
   winDiv.onclick = (e) => { focusWindow(win.id); };
 
   win.el = winDiv;
-  desktop.appendChild(winDiv);
+  DesktopWindows.push(win);
+  document.getElementById('desktop').appendChild(winDiv);
 
   updateWindowStyles(win);
+  updateTaskbar();
+  return win;
 }
 
 function updateWindowStyles(win) {
@@ -216,134 +200,38 @@ function getDesktopHeight() {
 function showStartMenu() {
   const menu = document.getElementById('start-menu');
   menu.innerHTML = DesktopApps.map(app =>
-    `<button class="start-menu-app-btn" onclick="openAppWindow('${app.id}')">
+    `<button class="start-menu-app-btn" data-appid="${app.id}">
       ${app.icon ? `<span style="font-size:1.05em; margin-right:0.4em;">${app.icon}</span>` : ''}
       ${app.title}
     </button>`
   ).join('');
   menu.style.display = "flex";
+  // Attach once-per-button event handlers for window registry
+  Array.from(menu.querySelectorAll('.start-menu-app-btn')).forEach(btn => {
+    btn.onclick = () => {
+      openAppWindow(btn.getAttribute('data-appid'));
+      hideStartMenu();
+    };
+  });
 }
 function hideStartMenu() {
   document.getElementById('start-menu').style.display = "none";
 }
-window.openAppWindow = function(appId) {
+function openAppWindow(appId) {
   const app = DesktopApps.find(a => a.id === appId);
   if (!app) return;
-  let content;
-  if (app.id === "games") {
-    // Games: persistent buttons, launch games in windows
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Game Library</h2>
-    <div class="game-btns"></div>
-    <p style="margin-top:2rem;opacity:0.8"><em>Enjoy your games! 😋</em></p>`;
-    const btns = div.querySelector('.game-btns');
-    GameList.forEach(game => {
-      const btn = document.createElement('button');
-      btn.className = 'game-btn';
-      btn.innerText = game.name;
-      btn.onclick = () => {
-        openGameWindow(game.url, game.name);
-      };
-      btns.appendChild(btn);
-    });
-    content = div;
-  } else if (app.id === "fetcher") {
-    // Website Fetcher: persistent form
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Website Fetcher</h2>
-      <form class="fletcher-box">
-        <input type="url" placeholder="Enter a website link here..." required />
-        <button type="submit">Fetch & Open</button>
-      </form>
-      <p class="fetcher-status" style="margin-top:1rem;color:var(--accent);"></p>`;
-    const form = div.querySelector('form');
-    const status = div.querySelector('.fetcher-status');
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      let url = form.querySelector('input').value.trim();
-      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-      status.textContent = "Opening website in a window...";
-      openGameWindow(url, url);
-      form.querySelector('input').value = '';
-      setTimeout(()=>{status.textContent = "";}, 1800);
-    };
-    content = div;
-  } else if (app.id === "executor") {
-    // HTML Executor: persistent textarea/form
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>HTML Executor</h2>
-      <div class="executor-box">
-        <label>Type HTML to execute:</label>
-        <textarea placeholder="Type or paste your HTML, JS, or CSS here..."></textarea>
-        <button>Execute Typed HTML</button>
-        <label>Or upload a file to execute as HTML:</label>
-        <input type="file" accept="*/*">
-        <button>Execute Uploaded File</button>
-        <span class="executor-status" style="color:var(--accent);margin-top:5px;"></span>
-      </div>`;
-    const box = div.querySelector('.executor-box');
-    const textarea = box.querySelector('textarea');
-    const executeBtn = box.querySelectorAll('button')[0];
-    const fileInput = box.querySelector('input[type="file"]');
-    const fileBtn = box.querySelectorAll('button')[1];
-    const status = box.querySelector('.executor-status');
-    executeBtn.onclick = () => {
-      if (!textarea.value.trim()) {
-        status.textContent = "Please enter HTML or code to execute.";
-        return;
-      }
-      openGameWindow("data:text/html," + encodeURIComponent(textarea.value), "HTML Executor");
-      status.textContent = "Executed in new window.";
-      setTimeout(()=>{status.textContent = "";}, 2000);
-    };
-    fileBtn.onclick = () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        status.textContent = "Please select a file to execute.";
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        openGameWindow("data:text/html," + encodeURIComponent(e.target.result), "HTML Executor File");
-        status.textContent = "File executed in new window.";
-        setTimeout(()=>{status.textContent = "";}, 2000);
-      };
-      reader.onerror = function() {
-        status.textContent = "Failed to read file.";
-      };
-      reader.readAsText(file);
-      fileInput.value = '';
-    };
-    content = div;
-  } else {
-    // Home/About: persistent content
-    const div = document.createElement('div');
-    div.innerHTML = renderHomeApp();
-    content = div;
-  }
-  createAppWindow({
+  createWindow({
     title: app.title,
-    content,
-    appId: app.id
-  });
-  updateTaskbar();
-  hideStartMenu();
-}
-
-function openGameWindow(url, name) {
-  // Always create persistent iframe
-  const iframe = document.createElement('iframe');
-  iframe.src = url;
-  iframe.style = "border:none;width:100%;height:100%;background:#151515";
-  createAppWindow({
-    title: name,
-    content: iframe,
-    appId: 'games'
+    appId: app.id,
+    contentNode: app.create()
   });
 }
 
-function renderHomeApp() {
-  return `
+// App window content factories: always return persistent DOM nodes
+
+function createHomeContent() {
+  const div = document.createElement('div');
+  div.innerHTML = `
     <h2>Welcome to Red Portal Desktop</h2>
     <p>
       This is a desktop-inspired web portal.<br>
@@ -359,6 +247,107 @@ function renderHomeApp() {
       <em>Try full-screen mode for a real desktop feel!</em>
     </p>
   `;
+  return div;
+}
+
+function createGamesContent() {
+  const div = document.createElement('div');
+  div.innerHTML = `<h2>Game Library</h2>
+    <div class="game-btns"></div>
+    <p style="margin-top:2rem;opacity:0.8"><em>Enjoy your games! 😋</em></p>`;
+  const btns = div.querySelector('.game-btns');
+  GameList.forEach(game => {
+    const btn = document.createElement('button');
+    btn.className = 'game-btn';
+    btn.innerText = game.name;
+    btn.onclick = () => {
+      openGameWindow(game.url, game.name);
+    };
+    btns.appendChild(btn);
+  });
+  return div;
+}
+
+function openGameWindow(url, name) {
+  // Always create persistent iframe
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.style = "border:none;width:100%;height:100%;background:#151515";
+  createWindow({
+    title: name,
+    appId: 'games',
+    contentNode: iframe
+  });
+}
+
+function createFetcherContent() {
+  const div = document.createElement('div');
+  div.innerHTML = `<h2>Website Fetcher</h2>
+    <form class="fletcher-box">
+      <input type="url" placeholder="Enter a website link here..." required />
+      <button type="submit">Fetch & Open</button>
+    </form>
+    <p class="fetcher-status" style="margin-top:1rem;color:var(--accent);"></p>`;
+  const form = div.querySelector('form');
+  const status = div.querySelector('.fetcher-status');
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    let url = form.querySelector('input').value.trim();
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    status.textContent = "Opening website in a window...";
+    openGameWindow(url, url);
+    form.querySelector('input').value = '';
+    setTimeout(()=>{status.textContent = "";}, 1800);
+  };
+  return div;
+}
+
+function createExecutorContent() {
+  const div = document.createElement('div');
+  div.innerHTML = `<h2>HTML Executor</h2>
+    <div class="executor-box">
+      <label>Type HTML to execute:</label>
+      <textarea placeholder="Type or paste your HTML, JS, or CSS here..."></textarea>
+      <button>Execute Typed HTML</button>
+      <label>Or upload a file to execute as HTML:</label>
+      <input type="file" accept="*/*">
+      <button>Execute Uploaded File</button>
+      <span class="executor-status" style="color:var(--accent);margin-top:5px;"></span>
+    </div>`;
+  const box = div.querySelector('.executor-box');
+  const textarea = box.querySelector('textarea');
+  const executeBtn = box.querySelectorAll('button')[0];
+  const fileInput = box.querySelector('input[type="file"]');
+  const fileBtn = box.querySelectorAll('button')[1];
+  const status = box.querySelector('.executor-status');
+  executeBtn.onclick = () => {
+    if (!textarea.value.trim()) {
+      status.textContent = "Please enter HTML or code to execute.";
+      return;
+    }
+    openGameWindow("data:text/html," + encodeURIComponent(textarea.value), "HTML Executor");
+    status.textContent = "Executed in new window.";
+    setTimeout(()=>{status.textContent = "";}, 2000);
+  };
+  fileBtn.onclick = () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      status.textContent = "Please select a file to execute.";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      openGameWindow("data:text/html," + encodeURIComponent(e.target.result), "HTML Executor File");
+      status.textContent = "File executed in new window.";
+      setTimeout(()=>{status.textContent = "";}, 2000);
+    };
+    reader.onerror = function() {
+      status.textContent = "Failed to read file.";
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  };
+  return div;
 }
 
 // Fullscreen logic
@@ -376,22 +365,18 @@ document.getElementById('fullscreen-btn').onclick = toggleFullscreen;
 
 // Event listeners
 document.addEventListener("DOMContentLoaded", () => {
-  // Show home window at start
   openAppWindow('home');
-  // Start button
   document.getElementById('start-btn').onclick = () => {
     const menu = document.getElementById('start-menu');
     if (menu.style.display === "none") showStartMenu();
     else hideStartMenu();
   };
-  // Click outside start menu closes it
   document.addEventListener('mousedown', e => {
     const menu = document.getElementById('start-menu');
     if (menu.style.display !== "none" && !menu.contains(e.target) && e.target.id !== 'start-btn') {
       hideStartMenu();
     }
   });
-  // Adjust windows on resize (keep inside desktop)
   window.addEventListener('resize', () => {
     DesktopWindows.forEach(win => {
       const maxX = getDesktopWidth() - win.width;
