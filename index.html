@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Red Portal Desktop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="styles.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="desktop">
+    <!-- Windows will be injected here -->
+  </div>
+  <div id="taskbar">
+    <div id="start-btn" tabindex="0"><span>☰</span></div>
+    <div id="taskbar-windows"></div>
+    <div id="desktop-controls">
+      <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
+    </div>
+  </div>
+  <div id="start-menu" style="display:none;"></div>
+  <script src="components.js"></script>
+  <script src="games.js"></script>
+  <script src="windows.js"></script>
+  <script src="apps.js"></script>
+  <script src="desktop.js"></script>
+</body>
+</html>
