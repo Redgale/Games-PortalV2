@@ -24,18 +24,6 @@ Apps.games = {
   }
 };
 
-// Proxies (original)
-Apps.proxies = {
-  title: 'Proxies',
-  icon: '🛡️',
-  open(opts = {}) { WindowManager.create(this, opts); },
-  content() {
-    return window.PROXY_LIST.map(proxy =>
-      `<button style="display:block;width:100%;margin-bottom:8px;" onclick="fetchAndOpenBlob('${proxy.url}')">${proxy.name}</button>`
-    ).join('');
-  }
-};
-
 // Fetcher (web browser, uses your fetch logic)
 Apps.fetcher = window.Apps.fetcher;
 
