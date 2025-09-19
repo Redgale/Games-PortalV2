@@ -1,0 +1,35 @@
+// Taskbar: pinned apps, running apps, start menu/app launcher
+
+window.Taskbar = {
+  pinned: ['fetcher','texteditor','calculator','settings','terminal','fileexplorer'],
+  running: [],
+  init() {
+    const bar = document.getElementById('taskbar');
+    bar.className = 'taskbar';
+    bar.innerHTML = `
+      <button class="taskbar-start" onclick="Taskbar.openLauncher()">Red OS</button>
+      <div class="taskbar-apps"></div>
+    `;
+    this.renderApps();
+  },
+  renderApps() {
+    const appsDiv = document.querySelector('.taskbar-apps');
+    appsDiv.innerHTML = '';
+    this.pinned.forEach(appId=>{
+      const btn = document.createElement('button');
+      btn.className = 'taskbar-app'+(Taskbar.running.includes(appId)?' running':'');
+      btn.innerHTML = Apps[appId].icon || '🗔';
+      btn.title = Apps[appId].title;
+      btn.onclick = ()=>Apps[appId].open();
+      appsDiv.appendChild(btn);
+    });
+  },
+  openLauncher() {
+    ContextMenu.show(Object.values(Apps).map(app=>({
+      label: app.title,
+      icon: app.icon,
+      action: ()=>app.open()
+    })), 80, window.innerHeight-55);
+  }
+};
+document.addEventListener('DOMContentLoaded', ()=>Taskbar.init());
