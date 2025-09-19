@@ -1,4 +1,4 @@
-// Improved Desktop Shell: Right-click context menu with all apps/pages
+// Desktop shell: right-click menu with all apps/pages, wallpaper, window spawning, shortcuts
 
 window.Desktop = {
   wallpaper: localStorage.getItem('wallpaper') || getComputedStyle(document.documentElement).getPropertyValue('--wallpaper'),
@@ -6,11 +6,20 @@ window.Desktop = {
   runningApps: {},
   init() {
     document.getElementById('desktop-bg').style.backgroundImage = this.wallpaper;
+
+    // Right click = context menu for desktop (shows all apps/pages)
     document.getElementById('desktop-bg').addEventListener('contextmenu', this.showContextMenu.bind(this));
+
     // Keyboard shortcuts
     document.addEventListener('keydown', this.handleShortcut.bind(this));
-    // Register all app launchers and icons here
-    // Do not auto-boot any app unless desired
+
+    // Prevent default context menu everywhere
+    document.body.addEventListener('contextmenu', function(e) {
+      if (e.target.id === 'desktop-bg' || e.target.id === 'desktop') e.preventDefault();
+    });
+
+    // Optional: boot sequence
+    // You may auto open an app if desired
   },
   setWallpaper(url) {
     this.wallpaper = `url('${url}')`;
@@ -19,26 +28,26 @@ window.Desktop = {
   },
   showContextMenu(e) {
     e.preventDefault();
-    // Dynamically generate menu from all registered apps/pages
-    const items = Object.values(Apps).map(app => ({
+    const items = Object.values(window.Apps).map(app => ({
       label: app.title,
       icon: app.icon,
       action: () => app.open()
     }));
-    items.unshift({label: 'Change Wallpaper', action: () => Apps.settings.open()});
+    // Add desktop options to top
+    items.unshift({label: 'Change Wallpaper', icon: '🖼️', action: () => window.Apps.settings.open()});
     ContextMenu.show(items, e.pageX, e.pageY);
   },
   spawnApp(appId, opts={}) {
-    if (Apps[appId]) Apps[appId].open(opts);
+    if (window.Apps[appId]) window.Apps[appId].open(opts);
   },
   handleShortcut(e) {
-    // Alt+Tab = switch window, Ctrl+N = new window (note), etc.
     if (e.altKey && e.key === 'Tab') {
       WindowManager.focusNext();
     }
     if (e.ctrlKey && e.key === 'n') {
-      Apps.texteditor.open();
+      window.Apps.texteditor.open();
     }
   }
 };
-document.addEventListener('DOMContentLoaded', ()=>Desktop.init());
+
+document.addEventListener('DOMContentLoaded', () => Desktop.init());
