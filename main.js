@@ -12,20 +12,7 @@ Apps.texteditor = {
   }
 };
 
-// Games (original)
-Apps.games = {
-  title: 'Games',
-  icon: '🎮',
-  open(opts = {}) {
-    WindowManager.create(this, opts);
-  },
-  content() {
-    if (!window.GAME_LIST || !Array.isArray(window.GAME_LIST)) return '<div>No games found!</div>';
-    return window.GAME_LIST.map(game =>
-      `<button style="display:block;width:100%;margin-bottom:8px;" onclick="fetchAndOpenBlob('${game.url}')">${game.name}</button>`
-    ).join('');
-  }
-};
+// Import Games app logic from apps/games.js (do not redefine here!)
 
 // Fetcher (web browser, uses your fetch logic)
 Apps.fetcher = window.Apps.fetcher;
