@@ -1,59 +1,125 @@
-body, html {
-  margin: 0;
-  padding: 0;
-  background: #0A0A0A;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  height: 100vh;
-  overflow: hidden;
+:root {
+  --primary: #FF2E2E;
+  --accent: #FF2E2E;
+  --bg: #101018;
+  --card: #18181F;
+  --button: #232323;
+  --button-hover: #FF2E2E;
+  --text: #FFFFFF;
+  --window-bg: #22222B;
+  --window-active: #FF2E2E;
+  --window-inactive: #44445A;
+  --taskbar-bg: #18181FEE;
+  --tray-bg: #18181FCC;
+  --shadow: 0 4px 24px rgba(255,46,46,0.08);
+  --radius: 12px;
+  --wallpaper: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80');
+  --transition: cubic-bezier(.5,.1,.1,1);
+}
+/* Desktop background */
+#desktop-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-image: var(--wallpaper);
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  transition: background-image 1s var(--transition);
 }
 #desktop {
   position: fixed;
-  left: 0; top: 0;
-  width: 100vw;
-  height: calc(100vh - 54px);
-  background: #0A0A0A;
+  top: 0; left: 0; width: 100vw; height: 100vh;
   z-index: 1;
+  pointer-events: none;
 }
-#taskbar {
+#windows {
   position: fixed;
-  left: 0; bottom: 0;
-  width: 100vw;
-  height: 54px;
-  background: #151515;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  padding: 0 1.2rem;
-  z-index: 10;
-}
-.window {
-  position: absolute;
-  left: 60px;
-  top: 60px;
-  width: 600px;
-  height: 400px;
-  background: #232323;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(255,46,46,0.16);
-  border: 2px solid #FF2E2E;
-  overflow: hidden;
+  top: 0; left: 0; width: 100vw; height: 100vh;
   z-index: 2;
-  display: none;
+  pointer-events: none;
 }
-.window.active {
-  display: block;
+/* Window styling */
+.os-window {
+  position: absolute;
+  background: var(--window-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  min-width: 260px;
+  min-height: 160px;
+  max-width: 96vw;
+  max-height: 92vh;
+  resize: both;
+  overflow: hidden;
+  z-index: 3;
+  transition: box-shadow 0.3s, border 0.3s, transform 0.5s var(--transition);
+  pointer-events: auto;
 }
-.window-header {
-  background: #151515;
-  color: #FF2E2E;
+.os-window.active { border: 2px solid var(--window-active); }
+.os-window.inactive { border: 2px solid var(--window-inactive); }
+.os-window-header {
+  background: var(--card);
   padding: 0.5rem 1rem;
-  font-weight: bold;
+  cursor: move;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: var(--radius) var(--radius) 0 0;
+  user-select: none;
 }
-.window-iframe, .window-content {
-  width: 100%;
-  height: calc(100% - 44px);
-  border: none;
-  background: #151515;
-  display: block;
+.os-window-title { font-family: 'Orbitron', Arial, sans-serif; font-size: 1.1rem; }
+.os-window-controls button {
+  background: transparent; border: none; color: var(--accent);
+  font-size: 1.2rem; margin-left: 0.5rem; cursor: pointer;
+  transition: color 0.2s;
+}
+.os-window-controls button:hover { color: var(--window-active); }
+.os-window-content { padding: 1rem; height: calc(100% - 38px); overflow: auto; }
+.taskbar {
+  position: fixed; bottom: 0; left: 0; width: 100vw; height: 48px;
+  background: var(--taskbar-bg);
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 10;
+  box-shadow: 0 -2px 24px var(--shadow);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 0 1.2rem;
+}
+.taskbar-apps {display: flex; gap: 1rem;}
+.taskbar-app {background: none; border: none; color: var(--primary); font-size: 1.4rem; cursor: pointer; margin: 0 0.2rem;}
+.taskbar-app.running {color: var(--accent);}
+.taskbar-start {font-family: 'Orbitron'; font-size: 1.2rem; background: var(--accent); color: #fff; border-radius: var(--radius); padding: 0.6rem 1rem; cursor: pointer;}
+.tray {
+  position: fixed; bottom: 0; right: 0; min-width: 150px; height: 48px;
+  background: var(--tray-bg);
+  display: flex; align-items: center; gap: 1rem; justify-content: flex-end;
+  z-index: 11;
+  border-radius: var(--radius) 0 0 0;
+  padding: 0 1.2rem;
+}
+.tray-clock {font-family: 'Orbitron'; font-size: 1.1rem; color: var(--accent);}
+.tray-icon {font-size: 1.3rem; color: var(--primary); margin-left: 0.6rem;}
+/* Context menu */
+#context-menu {
+  position: fixed;
+  display: none;
+  z-index: 9999;
+  background: var(--card);
+  color: var(--text);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 160px;
+  padding: 0.4rem 0;
+}
+.context-menu-item {
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.18s;
+}
+.context-menu-item:hover {
+  background: var(--button-hover);
+  color: #fff;
+}
+/* Animations, drag-drop, snap, and more apps can be added here */
+@media (max-width: 700px) {
+  .os-window { min-width: 180px; }
+  .taskbar, .tray { height: 38px; padding: 0 0.4rem; }
 }
