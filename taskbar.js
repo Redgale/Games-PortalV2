@@ -11,9 +11,11 @@ window.Taskbar = {
       <div class="taskbar-apps"></div>
     `;
     this.renderApps();
+    // Use event delegation to reliably attach click in case of DOM timing
     setTimeout(() => {
-      document.getElementById('taskbar-start-btn').onclick = () => this.openLauncher();
-    }, 0);
+      const btn = document.getElementById('taskbar-start-btn');
+      if (btn) btn.onclick = () => Taskbar.openLauncher();
+    }, 10);
   },
   renderApps() {
     const appsDiv = document.querySelector('.taskbar-apps');
