@@ -1,4 +1,4 @@
-// Games-PortalV2 Desktop UI - NO micro reloads, persistent windows
+// Persistent Content Switcher - No Micro Reloads, Ever
 
 const GameList = [
   { name: "Cookie Clicker", url: "https://cookieclicker-nu.vercel.app" },
@@ -14,190 +14,37 @@ const GameList = [
   { name: "Compact Conflict", url: "https://wasyl.eu/games/compact-conflict/play.html" },
 ];
 
-const DesktopApps = [
-  { id: 'home', title: 'Home/About', icon: '🏠', makeNode: makeHomeNode },
-  { id: 'games', title: 'Games', icon: '🎮', makeNode: makeGamesNode },
-  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', makeNode: makeFetcherNode },
-  { id: 'executor', title: 'HTML Executor', icon: '⚡', makeNode: makeExecutorNode },
-];
+// Each app/tab keeps its persistent DOM node
+const persistentNodes = {
+  home: makeHomeNode(),
+  games: makeGamesNode(),
+  fetcher: makeFetcherNode(),
+  executor: makeExecutorNode()
+};
 
-let DesktopWindows = [];
-let windowCounter = 0;
-let dragInfo = null;
-let isFullscreen = false;
+// Track open game windows and their nodes, so you can open as many as you want
+const gameWindows = [];
+let currentApp = "home"; // default
 
-// Main function to create a persistent window
-function createWindow({title, appId, node}) {
-  const id = windowCounter++;
-  const win = {
-    id, title, appId, minimized: false, maximized: false, active: true,
-    x: 70 + Math.random()*160, y: 60 + Math.random()*80, width: 520, height: 340, z: 10 + id,
-    el: null, node
-  };
+const windowContainer = document.getElementById("window-container");
+const taskbarWindows = document.getElementById("taskbar-windows");
 
-  // Window DOM
-  const winDiv = document.createElement('div');
-  winDiv.className = 'window';
-  winDiv.style.left = win.x + 'px';
-  winDiv.style.top = win.y + 'px';
-  winDiv.style.width = win.width + 'px';
-  winDiv.style.height = win.height + 'px';
-  winDiv.style.zIndex = win.z;
-  winDiv.dataset.winId = win.id;
-
-  // header
-  const header = document.createElement('div');
-  header.className = 'window-header';
-  header.innerHTML = `
-    <span class="window-title">${win.title}</span>
-    <div class="window-controls">
-      <button class="window-control-btn" title="Minimize">—</button>
-      <button class="window-control-btn" title="Maximize/Restore">⛶</button>
-      <button class="window-control-btn" title="Close">✕</button>
-    </div>
-  `;
-  header.addEventListener('mousedown', (e) => startDrag(win.id, e));
-  header.querySelectorAll('.window-control-btn')[0].onclick = (e) => { minimizeWindow(win.id); e.stopPropagation(); };
-  header.querySelectorAll('.window-control-btn')[1].onclick = (e) => { toggleMaximizeWindow(win.id); e.stopPropagation(); };
-  header.querySelectorAll('.window-control-btn')[2].onclick = (e) => { closeWindow(win.id); e.stopPropagation(); };
-  winDiv.appendChild(header);
-
-  // content (persistent node)
-  const contentDiv = document.createElement('div');
-  contentDiv.className = 'window-content';
-  contentDiv.appendChild(node);
-  winDiv.appendChild(contentDiv);
-
-  winDiv.onclick = (e) => { focusWindow(win.id); };
-
-  win.el = winDiv;
-  DesktopWindows.push(win);
-  document.getElementById('desktop').appendChild(winDiv);
-
-  updateWindowStyles(win);
+// Switch to an app/tab or game window
+function showWindow(appId, node) {
+  while (windowContainer.firstChild) windowContainer.removeChild(windowContainer.firstChild);
+  windowContainer.appendChild(node);
+  currentApp = appId;
   updateTaskbar();
-  return win;
-}
-
-function updateWindowStyles(win) {
-  if (!win.el) return;
-  win.el.style.left = win.x + 'px';
-  win.el.style.top = win.y + 'px';
-  win.el.style.width = win.width + 'px';
-  win.el.style.height = win.height + 'px';
-  win.el.style.zIndex = win.z;
-  win.el.classList.toggle('minimized', win.minimized);
-  win.el.classList.toggle('maximized', win.maximized);
-  win.el.classList.toggle('active', win.active);
-  win.el.style.display = win.minimized ? 'none' : '';
-  if (win.maximized) {
-    win.el.style.left = '0px';
-    win.el.style.top = '0px';
-    win.el.style.width = getDesktopWidth() + 'px';
-    win.el.style.height = getDesktopHeight() + 'px';
-  }
-}
-
-function minimizeWindow(id) {
-  const win = DesktopWindows.find(w => w.id === id);
-  if (win) {
-    win.minimized = true;
-    updateWindowStyles(win);
-    updateTaskbar();
-  }
-}
-
-function toggleMaximizeWindow(id) {
-  const win = DesktopWindows.find(w => w.id === id);
-  if (win) {
-    win.maximized = !win.maximized;
-    updateWindowStyles(win);
-    updateTaskbar();
-  }
-}
-
-function closeWindow(id) {
-  const idx = DesktopWindows.findIndex(w => w.id === id);
-  if (idx >= 0) {
-    const win = DesktopWindows[idx];
-    if (win.el) win.el.remove();
-    DesktopWindows.splice(idx, 1);
-    updateTaskbar();
-  }
-}
-
-function focusWindow(id) {
-  DesktopWindows.forEach(w => w.active = false);
-  const win = DesktopWindows.find(w => w.id === id);
-  if (win) {
-    win.active = true;
-    win.minimized = false;
-    win.z = Math.max(...DesktopWindows.map(w => w.z)) + 1;
-    updateWindowStyles(win);
-    updateTaskbar();
-  }
-}
-
-function startDrag(id, event) {
-  const win = DesktopWindows.find(w => w.id === id);
-  if (!win || win.maximized || win.minimized) return;
-  focusWindow(id);
-  dragInfo = {
-    win,
-    startX: event.clientX,
-    startY: event.clientY,
-    origX: win.x,
-    origY: win.y
-  };
-  window.addEventListener('mousemove', dragMove);
-  window.addEventListener('mouseup', dragEnd);
-}
-
-function dragMove(e) {
-  if (!dragInfo) return;
-  let newX = dragInfo.origX + (e.clientX - dragInfo.startX);
-  let newY = dragInfo.origY + (e.clientY - dragInfo.startY);
-  const maxX = getDesktopWidth() - dragInfo.win.width;
-  const maxY = getDesktopHeight() - dragInfo.win.height;
-  dragInfo.win.x = Math.max(0, Math.min(newX, maxX));
-  dragInfo.win.y = Math.max(0, Math.min(newY, maxY));
-  updateWindowStyles(dragInfo.win);
-}
-
-function dragEnd() {
-  window.removeEventListener('mousemove', dragMove);
-  window.removeEventListener('mouseup', dragEnd);
-  dragInfo = null;
-}
-
-function updateTaskbar() {
-  const container = document.getElementById('taskbar-windows');
-  container.innerHTML = '';
-  DesktopWindows.forEach(win => {
-    const btn = document.createElement('button');
-    btn.className = 'taskbar-window-btn' + (win.active ? ' active' : '');
-    btn.innerText = win.title;
-    btn.onclick = () => {
-      if (win.minimized) {
-        win.minimized = false;
-        updateWindowStyles(win);
-      }
-      focusWindow(win.id);
-    };
-    container.appendChild(btn);
-  });
-}
-
-function getDesktopWidth() {
-  let desktop = document.getElementById('desktop');
-  return desktop ? desktop.offsetWidth : window.innerWidth;
-}
-function getDesktopHeight() {
-  let desktop = document.getElementById('desktop');
-  return desktop ? desktop.offsetHeight : window.innerHeight - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--taskbar-height'));
 }
 
 // Start menu logic
+const DesktopApps = [
+  { id: 'home', title: 'Home/About', icon: '🏠' },
+  { id: 'games', title: 'Games', icon: '🎮' },
+  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐' },
+  { id: 'executor', title: 'HTML Executor', icon: '⚡' },
+];
+
 function showStartMenu() {
   const menu = document.getElementById('start-menu');
   menu.innerHTML = DesktopApps.map(app =>
@@ -209,7 +56,7 @@ function showStartMenu() {
   menu.style.display = "flex";
   Array.from(menu.querySelectorAll('.start-menu-app-btn')).forEach(btn => {
     btn.onclick = () => {
-      openAppWindow(btn.getAttribute('data-appid'));
+      showWindow(btn.getAttribute('data-appid'), persistentNodes[btn.getAttribute('data-appid')]);
       hideStartMenu();
     };
   });
@@ -217,25 +64,29 @@ function showStartMenu() {
 function hideStartMenu() {
   document.getElementById('start-menu').style.display = "none";
 }
-function openAppWindow(appId) {
-  // If window for this app already exists, just focus it
-  const win = DesktopWindows.find(w => w.appId === appId);
-  if (win) {
-    focusWindow(win.id);
-    return;
-  }
-  // Create persistent node for app
-  const app = DesktopApps.find(a => a.id === appId);
-  if (!app) return;
-  createWindow({
-    title: app.title,
-    appId: app.id,
-    node: app.makeNode()
+
+// Taskbar
+function updateTaskbar() {
+  taskbarWindows.innerHTML = "";
+  // Show native apps
+  DesktopApps.forEach(app => {
+    const btn = document.createElement('button');
+    btn.className = 'taskbar-window-btn' + (currentApp === app.id ? ' active' : '');
+    btn.innerText = app.title;
+    btn.onclick = () => showWindow(app.id, persistentNodes[app.id]);
+    taskbarWindows.appendChild(btn);
+  });
+  // Show open game windows
+  gameWindows.forEach((gw, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'taskbar-window-btn' + (currentApp === gw.id ? ' active' : '');
+    btn.innerText = gw.title;
+    btn.onclick = () => showWindow(gw.id, gw.node);
+    taskbarWindows.appendChild(btn);
   });
 }
 
-// App window node factories: always return persistent DOM nodes
-
+// App Node Factories (persistent and interactive)
 function makeHomeNode() {
   const div = document.createElement('div');
   div.innerHTML = `
@@ -243,7 +94,8 @@ function makeHomeNode() {
     <p>
       This is a desktop-inspired web portal.<br>
       Use the start button (bottom left) to open apps.<br>
-      Apps open in windows, which you can move, minimize, maximize, or close.
+      Apps open in windows/tabs, which you can switch in the taskbar.<br>
+      <b>No micro reloads: tabs/games never reload!</b>
     </p>
     <ul>
       <li><strong>Games:</strong> Play fun web games.</li>
@@ -267,24 +119,21 @@ function makeGamesNode() {
     const btn = document.createElement('button');
     btn.className = 'game-btn';
     btn.innerText = game.name;
-    btn.onclick = () => {
-      openGameWindow(game.url, game.name);
-    };
+    btn.onclick = () => openGameWindow(game.url, game.name);
     btns.appendChild(btn);
   });
   return div;
 }
 
 function openGameWindow(url, name) {
-  // Always create persistent iframe
+  // Persistent iframe node for each game window
   const iframe = document.createElement('iframe');
   iframe.src = url;
   iframe.style = "border:none;width:100%;height:100%;background:#151515";
-  createWindow({
-    title: name,
-    appId: 'games',
-    node: iframe
-  });
+  const gw = { id: "game-" + Date.now() + Math.random(), title: name, node: iframe };
+  gameWindows.push(gw);
+  showWindow(gw.id, gw.node);
+  updateTaskbar();
 }
 
 function makeFetcherNode() {
@@ -358,45 +207,27 @@ function makeExecutorNode() {
 }
 
 // Fullscreen logic
-function toggleFullscreen() {
+document.getElementById('fullscreen-btn').onclick = function() {
   const wrapper = document.getElementById('desktop-wrapper');
-  if (!isFullscreen) {
-    wrapper.requestFullscreen?.();
-    isFullscreen = true;
-  } else {
-    document.exitFullscreen?.();
-    isFullscreen = false;
-  }
-}
-document.getElementById('fullscreen-btn').onclick = toggleFullscreen;
+  if (!document.fullscreenElement) wrapper.requestFullscreen?.();
+  else document.exitFullscreen?.();
+};
 
-// Event listeners
-document.addEventListener("DOMContentLoaded", () => {
-  openAppWindow('home');
-  document.getElementById('start-btn').onclick = () => {
-    const menu = document.getElementById('start-menu');
-    if (menu.style.display === "none") showStartMenu();
-    else hideStartMenu();
-  };
-  document.addEventListener('mousedown', e => {
-    const menu = document.getElementById('start-menu');
-    if (menu.style.display !== "none" && !menu.contains(e.target) && e.target.id !== 'start-btn') {
-      hideStartMenu();
-    }
-  });
-  window.addEventListener('resize', () => {
-    DesktopWindows.forEach(win => {
-      const maxX = getDesktopWidth() - win.width;
-      const maxY = getDesktopHeight() - win.height;
-      win.x = Math.max(0, Math.min(win.x, maxX));
-      win.y = Math.max(0, Math.min(win.y, maxY));
-      if (win.maximized) {
-        win.x = 0;
-        win.y = 0;
-        win.width = getDesktopWidth();
-        win.height = getDesktopHeight();
-      }
-      updateWindowStyles(win);
-    });
-  });
+// Start button
+document.getElementById('start-btn').onclick = () => {
+  const menu = document.getElementById('start-menu');
+  if (menu.style.display === "none") showStartMenu();
+  else hideStartMenu();
+};
+
+// Click outside start menu closes it
+document.addEventListener('mousedown', e => {
+  const menu = document.getElementById('start-menu');
+  if (menu.style.display !== "none" && !menu.contains(e.target) && e.target.id !== 'start-btn') {
+    hideStartMenu();
+  }
 });
+
+// Initial state: show home
+showWindow('home', persistentNodes['home']);
+updateTaskbar();
