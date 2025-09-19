@@ -1,72 +1,41 @@
-// Absolutely persistent iframes/textareas. No reloads, ever.
+// Desktop shell: handles wallpaper, spawning windows, desktop context menu, drag/drop, shortcuts
 
-const desktop = document.getElementById('desktop');
-
-const windows = {
-  home: createWindow('Home', makeHomeContent()),
-  games: createWindow('Games', makeGamesIframe()),
-  fetcher: createWindow('Fetcher', makeFetcherIframe()),
-  executor: createWindow('Executor', makeExecutorIframe())
+window.Desktop = {
+  wallpaper: localStorage.getItem('wallpaper') || getComputedStyle(document.documentElement).getPropertyValue('--wallpaper'),
+  windows: [],
+  runningApps: {},
+  init() {
+    document.getElementById('desktop-bg').style.backgroundImage = this.wallpaper;
+    document.getElementById('desktop-bg').addEventListener('contextmenu', this.showContextMenu.bind(this));
+    // Keyboard shortcuts
+    document.addEventListener('keydown', this.handleShortcut.bind(this));
+    // Drag-and-drop, boot apps, window logic
+    // Register all app launchers and icons here
+    this.spawnApp('fetcher'); // Example: open browser on boot
+  },
+  setWallpaper(url) {
+    this.wallpaper = `url('${url}')`;
+    document.getElementById('desktop-bg').style.backgroundImage = this.wallpaper;
+    localStorage.setItem('wallpaper', this.wallpaper);
+  },
+  showContextMenu(e) {
+    e.preventDefault();
+    ContextMenu.show([
+      {label: 'Change Wallpaper', action: () => Apps.settings.open()},
+      {label: 'New Note', action: () => Apps.texteditor.open()},
+    ], e.pageX, e.pageY);
+  },
+  spawnApp(appId, opts={}) {
+    if (Apps[appId]) Apps[appId].open(opts);
+  },
+  handleShortcut(e) {
+    // Alt+Tab = switch window, Ctrl+N = new window (note), etc.
+    if (e.altKey && e.key === 'Tab') {
+      WindowManager.focusNext();
+    }
+    if (e.ctrlKey && e.key === 'n') {
+      Apps.texteditor.open();
+    }
+  }
 };
-
-// Add windows to desktop
-Object.values(windows).forEach(win => desktop.appendChild(win));
-
-// Show only one window at a time
-function showWindow(name) {
-  Object.entries(windows).forEach(([key, win]) => {
-    win.classList.toggle('active', key === name);
-  });
-}
-
-// Tab buttons
-document.getElementById('tab-home').onclick = () => showWindow('home');
-document.getElementById('tab-games').onclick = () => showWindow('games');
-document.getElementById('tab-fetcher').onclick = () => showWindow('fetcher');
-document.getElementById('tab-executor').onclick = () => showWindow('executor');
-
-// Fullscreen
-document.getElementById('fullscreen-btn').onclick = () => {
-  document.documentElement.requestFullscreen?.();
-};
-
-// --- Window creation functions ---
-function createWindow(title, contentNode) {
-  const win = document.createElement('div');
-  win.className = 'window';
-  win.innerHTML = `<div class="window-header">${title}</div>`;
-  win.appendChild(contentNode);
-  return win;
-}
-
-function makeHomeContent() {
-  const div = document.createElement('div');
-  div.className = 'window-content';
-  div.innerHTML = `<h2>Welcome!</h2>
-    <p>This portal uses persistent windows. Switch tabs—no reloads, no lost state.</p>`;
-  return div;
-}
-
-function makeGamesIframe() {
-  const iframe = document.createElement('iframe');
-  iframe.className = 'window-iframe';
-  iframe.src = "https://cookieclicker-nu.vercel.app"; // Example game, you can cycle games in this window!
-  return iframe;
-}
-
-function makeFetcherIframe() {
-  const iframe = document.createElement('iframe');
-  iframe.className = 'window-iframe';
-  iframe.src = "https://example.com"; // Or blank, and you can change src with a form
-  return iframe;
-}
-
-function makeExecutorIframe() {
-  const iframe = document.createElement('iframe');
-  iframe.className = 'window-iframe';
-  iframe.srcdoc = "<html><body style='background:#151515;color:#fff'><h2>Type HTML below</h2></body></html>";
-  return iframe;
-}
-
-// Show home at first
-showWindow('home');
+document.addEventListener('DOMContentLoaded', ()=>Desktop.init());
