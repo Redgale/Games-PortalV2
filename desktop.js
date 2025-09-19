@@ -7,13 +7,10 @@ window.Desktop = {
   init() {
     document.getElementById('desktop-bg').style.backgroundImage = this.wallpaper;
 
-    // Right click = context menu for desktop (shows all apps/pages)
     document.getElementById('desktop-bg').addEventListener('contextmenu', this.showContextMenu.bind(this));
 
-    // Keyboard shortcuts
     document.addEventListener('keydown', this.handleShortcut.bind(this));
 
-    // Prevent default context menu everywhere on desktop
     document.body.addEventListener('contextmenu', function(e) {
       if (e.target.id === 'desktop-bg' || e.target.id === 'desktop') e.preventDefault();
     });
@@ -30,7 +27,6 @@ window.Desktop = {
       icon: app.icon,
       action: () => app.open()
     }));
-    // Add desktop options to top
     items.unshift({label: 'Change Wallpaper', icon: '🖼️', action: () => window.Apps.settings.open()});
     ContextMenu.show(items, e.pageX, e.pageY);
   },
