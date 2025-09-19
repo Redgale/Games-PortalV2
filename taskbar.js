@@ -1,7 +1,7 @@
-// Taskbar: pinned apps, running apps, start menu/app launcher
+// Taskbar: pinned apps, start menu/app launcher
 
 window.Taskbar = {
-  pinned: ['fetcher', 'texteditor', 'calculator', 'settings', 'terminal', 'fileexplorer', 'games', 'proxies', 'executor'],
+  pinned: ['fetcher', 'texteditor', 'calculator', 'settings', 'terminal', 'fileexplorer', 'games', 'executor'],
   running: [],
   init() {
     const bar = document.getElementById('taskbar');
@@ -11,7 +11,9 @@ window.Taskbar = {
       <div class="taskbar-apps"></div>
     `;
     this.renderApps();
-    document.getElementById('taskbar-start-btn').onclick = () => this.openLauncher();
+    setTimeout(() => {
+      document.getElementById('taskbar-start-btn').onclick = () => this.openLauncher();
+    }, 0);
   },
   renderApps() {
     const appsDiv = document.querySelector('.taskbar-apps');
