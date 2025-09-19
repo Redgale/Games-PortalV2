@@ -16,8 +16,11 @@ Apps.texteditor = {
 Apps.games = {
   title: 'Games',
   icon: '🎮',
-  open(opts = {}) { WindowManager.create(this, opts); },
+  open(opts = {}) {
+    WindowManager.create(this, opts);
+  },
   content() {
+    if (!window.GAME_LIST || !Array.isArray(window.GAME_LIST)) return '<div>No games found!</div>';
     return window.GAME_LIST.map(game =>
       `<button style="display:block;width:100%;margin-bottom:8px;" onclick="fetchAndOpenBlob('${game.url}')">${game.name}</button>`
     ).join('');
@@ -138,7 +141,6 @@ Apps.calculator = {
     const input = document.getElementById('calc-input');
     const output = document.getElementById('calc-output');
     try {
-      // Safely evaluate math
       output.textContent = eval(input.value);
     } catch {
       output.textContent = "Invalid expression.";
@@ -164,7 +166,6 @@ Apps.terminal = {
     const history = document.getElementById('terminal-history');
     if (input.value.trim()) {
       history.innerHTML += `<div style="color:var(--accent);">$ ${input.value}</div>`;
-      // Simple echo
       history.innerHTML += `<div>${input.value}</div>`;
       input.value = '';
     }
@@ -200,8 +201,6 @@ Apps.notification = {
     return `<div>(No notifications yet!)</div>`;
   }
 };
-
-// Add more apps/widgets as needed!
 
 document.addEventListener('DOMContentLoaded', () => {
   // Boot sequence if desired
