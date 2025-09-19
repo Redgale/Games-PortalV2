@@ -2,19 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Red Portal Desktop</title>
+  <title>Red OS Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="styles.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div id="desktop-bg"></div>
   <div id="desktop"></div>
-  <div id="taskbar">
-    <button id="tab-home">Home</button>
-    <button id="tab-games">Games</button>
-    <button id="tab-fetcher">Fetcher</button>
-    <button id="tab-executor">Executor</button>
-    <button id="fullscreen-btn">⛶</button>
-  </div>
+  <div id="taskbar"></div>
+  <div id="tray"></div>
+  <div id="context-menu"></div>
+  <!-- Apps container (windows will be injected here) -->
+  <div id="windows"></div>
+
+  <!-- Core JS -->
+  <script src="utils.js"></script>
+  <script src="window.js"></script>
   <script src="desktop.js"></script>
+  <script src="taskbar.js"></script>
+  <script src="tray.js"></script>
+  <script src="contextmenu.js"></script>
+  <!-- Apps -->
+  <script src="apps/fetcher.js"></script>
+  <script src="apps/texteditor.js"></script>
+  <script src="apps/mediaplayer.js"></script>
+  <script src="apps/imageviewer.js"></script>
+  <script src="apps/calculator.js"></script>
+  <script src="apps/settings.js"></script>
+  <script src="apps/terminal.js"></script>
+  <script src="apps/calendar.js"></script>
+  <script src="apps/notification.js"></script>
+  <script src="apps/fileexplorer.js"></script>
+  <!-- Your original games and components logic -->
+  <script src="games.js"></script>
+  <script src="components.js"></script>
+  <!-- Entrypoint -->
+  <script src="main.js"></script>
 </body>
 </html>
