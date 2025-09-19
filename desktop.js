@@ -13,13 +13,10 @@ window.Desktop = {
     // Keyboard shortcuts
     document.addEventListener('keydown', this.handleShortcut.bind(this));
 
-    // Prevent default context menu everywhere
+    // Prevent default context menu everywhere on desktop
     document.body.addEventListener('contextmenu', function(e) {
       if (e.target.id === 'desktop-bg' || e.target.id === 'desktop') e.preventDefault();
     });
-
-    // Optional: boot sequence
-    // You may auto open an app if desired
   },
   setWallpaper(url) {
     this.wallpaper = `url('${url}')`;
