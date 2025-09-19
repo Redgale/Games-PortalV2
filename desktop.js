@@ -1,4 +1,4 @@
-// Desktop shell: handles wallpaper, spawning windows, desktop context menu, drag/drop, shortcuts
+// Improved Desktop Shell: Right-click context menu with all apps/pages
 
 window.Desktop = {
   wallpaper: localStorage.getItem('wallpaper') || getComputedStyle(document.documentElement).getPropertyValue('--wallpaper'),
@@ -9,9 +9,8 @@ window.Desktop = {
     document.getElementById('desktop-bg').addEventListener('contextmenu', this.showContextMenu.bind(this));
     // Keyboard shortcuts
     document.addEventListener('keydown', this.handleShortcut.bind(this));
-    // Drag-and-drop, boot apps, window logic
     // Register all app launchers and icons here
-    this.spawnApp('fetcher'); // Example: open browser on boot
+    // Do not auto-boot any app unless desired
   },
   setWallpaper(url) {
     this.wallpaper = `url('${url}')`;
@@ -20,10 +19,14 @@ window.Desktop = {
   },
   showContextMenu(e) {
     e.preventDefault();
-    ContextMenu.show([
-      {label: 'Change Wallpaper', action: () => Apps.settings.open()},
-      {label: 'New Note', action: () => Apps.texteditor.open()},
-    ], e.pageX, e.pageY);
+    // Dynamically generate menu from all registered apps/pages
+    const items = Object.values(Apps).map(app => ({
+      label: app.title,
+      icon: app.icon,
+      action: () => app.open()
+    }));
+    items.unshift({label: 'Change Wallpaper', action: () => Apps.settings.open()});
+    ContextMenu.show(items, e.pageX, e.pageY);
   },
   spawnApp(appId, opts={}) {
     if (Apps[appId]) Apps[appId].open(opts);
