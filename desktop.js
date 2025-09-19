@@ -1,11 +1,4 @@
-// Red Portal Desktop - Guaranteed NO micro reloads, persistent tab/app windows
-
-const DesktopApps = [
-  { id: 'home', title: 'Home/About', icon: '🏠', makeNode: makeHomeNode },
-  { id: 'games', title: 'Games', icon: '🎮', makeNode: makeGamesNode },
-  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', makeNode: makeFetcherNode },
-  { id: 'executor', title: 'HTML Executor', icon: '⚡', makeNode: makeExecutorNode },
-];
+// Games-PortalV2 Desktop UI - NO micro reloads, persistent windows
 
 const GameList = [
   { name: "Cookie Clicker", url: "https://cookieclicker-nu.vercel.app" },
@@ -21,11 +14,19 @@ const GameList = [
   { name: "Compact Conflict", url: "https://wasyl.eu/games/compact-conflict/play.html" },
 ];
 
+const DesktopApps = [
+  { id: 'home', title: 'Home/About', icon: '🏠', makeNode: makeHomeNode },
+  { id: 'games', title: 'Games', icon: '🎮', makeNode: makeGamesNode },
+  { id: 'fetcher', title: 'Website Fetcher', icon: '🌐', makeNode: makeFetcherNode },
+  { id: 'executor', title: 'HTML Executor', icon: '⚡', makeNode: makeExecutorNode },
+];
+
 let DesktopWindows = [];
 let windowCounter = 0;
 let dragInfo = null;
 let isFullscreen = false;
 
+// Main function to create a persistent window
 function createWindow({title, appId, node}) {
   const id = windowCounter++;
   const win = {
@@ -217,15 +218,15 @@ function hideStartMenu() {
   document.getElementById('start-menu').style.display = "none";
 }
 function openAppWindow(appId) {
-  const app = DesktopApps.find(a => a.id === appId);
-  if (!app) return;
-  // Check if window for this app already exists, just focus it
+  // If window for this app already exists, just focus it
   const win = DesktopWindows.find(w => w.appId === appId);
   if (win) {
     focusWindow(win.id);
     return;
   }
   // Create persistent node for app
+  const app = DesktopApps.find(a => a.id === appId);
+  if (!app) return;
   createWindow({
     title: app.title,
     appId: app.id,
