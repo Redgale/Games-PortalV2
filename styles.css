@@ -1,145 +1,59 @@
-:root {
-  --primary: #FF2E2E;
-  --accent: #FF2E2E;
-  --bg: #0A0A0A;
-  --card: #151515;
-  --button: #232323;
-  --button-hover: #FF2E2E;
-  --text: #FFFFFF;
-  --shadow: 0 4px 24px rgba(255,46,46,0.16);
-  --radius: 18px;
-  --taskbar-height: 54px;
-}
 body, html {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Nunito', Arial, sans-serif;
+  background: #0A0A0A;
+  color: #fff;
+  font-family: Arial, sans-serif;
   height: 100vh;
   overflow: hidden;
 }
-#desktop-wrapper {
+#desktop {
   position: fixed;
   left: 0; top: 0;
   width: 100vw;
-  height: 100vh;
-  background: var(--bg);
-  z-index: 0;
-  display: flex;
-  flex-direction: column;
+  height: calc(100vh - 54px);
+  background: #0A0A0A;
+  z-index: 1;
 }
 #taskbar {
-  flex: 0 0 var(--taskbar-height);
+  position: fixed;
+  left: 0; bottom: 0;
   width: 100vw;
-  height: var(--taskbar-height);
-  background: var(--card);
+  height: 54px;
+  background: #151515;
   display: flex;
+  gap: 1rem;
   align-items: center;
   padding: 0 1.2rem;
-  box-shadow: 0 -2px 16px var(--shadow);
-  z-index: 101;
-  position: relative;
+  z-index: 10;
 }
-#start-btn {
-  background: var(--button);
-  color: var(--primary);
-  border-radius: var(--radius);
-  padding: 0.4rem 1rem;
-  font-size: 1.5rem;
-  cursor: pointer;
-  margin-right: 1rem;
-  transition: background 0.18s;
-  outline: none;
-  user-select: none;
-}
-#start-btn:focus, #start-btn:hover {
-  background: var(--accent);
-  color: #fff;
-}
-#taskbar-windows {
-  flex: 1;
-  display: flex;
-  gap: 0.8rem;
-  min-height: 40px;
-}
-.taskbar-window-btn {
-  background: var(--button);
-  color: var(--text);
-  border-radius: var(--radius);
-  padding: 0.4rem 1rem;
-  cursor: pointer;
-  font-size: 1rem;
-  border: none;
-  outline: none;
-  transition: background 0.18s;
-  margin-right: 0.2rem;
-  min-width: 74px;
-}
-.taskbar-window-btn.active, .taskbar-window-btn:hover {
-  background: var(--primary);
-  color: #fff;
-}
-#fullscreen-btn {
-  background: var(--button);
-  color: var(--primary);
-  border-radius: 50%;
-  border: none;
-  font-size: 1.3rem;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  transition: background 0.18s;
-  margin-left: 1rem;
+.window {
   position: absolute;
-  right: 16px;
-  top: 7px;
-  z-index: 102;
-}
-#fullscreen-btn:hover {
-  background: var(--accent);
-  color: #fff;
-}
-#window-container {
-  flex: 1 1 auto;
-  width: 100vw;
-  height: calc(100vh - var(--taskbar-height));
-  position: relative;
+  left: 60px;
+  top: 60px;
+  width: 600px;
+  height: 400px;
+  background: #232323;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(255,46,46,0.16);
+  border: 2px solid #FF2E2E;
   overflow: hidden;
-  background: var(--bg);
+  z-index: 2;
+  display: none;
 }
-#start-menu {
-  position: absolute;
-  left: 18px; top: var(--taskbar-height);
-  background: var(--card);
-  color: var(--text);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1rem 1rem 0.7rem 1rem;
-  min-width: 220px;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  animation: fadeIn 0.3s;
+.window.active {
+  display: block;
 }
-.start-menu-app-btn {
-  background: var(--button);
-  color: var(--primary);
-  border-radius: var(--radius);
+.window-header {
+  background: #151515;
+  color: #FF2E2E;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+}
+.window-iframe, .window-content {
+  width: 100%;
+  height: calc(100% - 44px);
   border: none;
-  font-size: 1.08rem;
-  padding: 0.7rem 1.1rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.18s, color 0.18s;
-  outline: none;
-}
-.start-menu-app-btn:hover {
-  background: var(--primary);
-  color: #fff;
-}
-@keyframes fadeIn {
-  0% { opacity: 0; transform: scale(0.94);}
-  100% { opacity: 1; transform: scale(1);}
+  background: #151515;
+  display: block;
 }
