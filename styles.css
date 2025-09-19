@@ -16,7 +16,7 @@
   --wallpaper: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80');
   --transition: cubic-bezier(.5,.1,.1,1);
 }
-/* Desktop background */
+
 #desktop-bg {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
@@ -26,19 +26,22 @@
   z-index: 0;
   transition: background-image 1s var(--transition);
 }
+
 #desktop {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
   z-index: 1;
   pointer-events: none;
 }
+
+/* Windows container, don't overlap taskbar/tray */
 #windows {
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
+  top: 0; left: 0; width: 100vw; height: calc(100vh - 48px);
   z-index: 2;
   pointer-events: none;
 }
-/* Window styling */
+
 .os-window {
   position: absolute;
   background: var(--window-bg);
@@ -48,7 +51,7 @@
   min-width: 260px;
   min-height: 160px;
   max-width: 96vw;
-  max-height: 92vh;
+  max-height: calc(92vh - 48px);
   resize: both;
   overflow: hidden;
   z-index: 3;
@@ -73,13 +76,15 @@
 }
 .os-window-controls button:hover { color: var(--window-active); }
 .os-window-content { padding: 1rem; height: calc(100% - 38px); overflow: auto; }
+
+/* --- Taskbar and Tray --- */
 .taskbar {
-  position: fixed; bottom: 0; left: 0; width: 100vw; height: 48px;
+  position: fixed; bottom: 0; left: 0; width: calc(100vw - 180px); height: 48px;
   background: var(--taskbar-bg);
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: flex-start;
   z-index: 10;
   box-shadow: 0 -2px 24px var(--shadow);
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: var(--radius) 0 0 0;
   padding: 0 1.2rem;
 }
 .taskbar-apps {display: flex; gap: 1rem;}
@@ -87,11 +92,11 @@
 .taskbar-app.running {color: var(--accent);}
 .taskbar-start {font-family: 'Orbitron'; font-size: 1.2rem; background: var(--accent); color: #fff; border-radius: var(--radius); padding: 0.6rem 1rem; cursor: pointer;}
 .tray {
-  position: fixed; bottom: 0; right: 0; min-width: 150px; height: 48px;
+  position: fixed; bottom: 0; right: 0; width: 180px; height: 48px;
   background: var(--tray-bg);
   display: flex; align-items: center; gap: 1rem; justify-content: flex-end;
   z-index: 11;
-  border-radius: var(--radius) 0 0 0;
+  border-radius: 0 var(--radius) 0 0;
   padding: 0 1.2rem;
 }
 .tray-clock {font-family: 'Orbitron'; font-size: 1.1rem; color: var(--accent);}
@@ -120,6 +125,8 @@
 }
 /* Animations, drag-drop, snap, and more apps can be added here */
 @media (max-width: 700px) {
-  .os-window { min-width: 180px; }
-  .taskbar, .tray { height: 38px; padding: 0 0.4rem; }
+  .taskbar { width: 100vw; height: 38px; padding: 0 0.4rem; border-radius: var(--radius) var(--radius) 0 0;}
+  .tray { width: 100vw; height: 38px; left: 0; right: 0; bottom: 38px; border-radius: 0 0 var(--radius) var(--radius;}
+  #windows { height: calc(100vh - 76px); }
+  .os-window { min-width: 180px; max-height: calc(92vh - 76px);}
 }
