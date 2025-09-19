@@ -5,6 +5,8 @@
   <title>Red Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="styles.css" rel="stylesheet">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#317EFB">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -13,5 +15,12 @@
   <script src="components.js"></script>
   <script src="games.js"></script>
   <script src="main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(() => console.log('Service Worker registered'))
+        .catch(e => console.error('Service Worker registration failed:', e));
+    }
+  </script>
 </body>
 </html>
